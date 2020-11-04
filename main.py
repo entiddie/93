@@ -7,7 +7,7 @@ import asyncio
 import json
 
 
-client = commands.Bot(command_prefix=commands.when_mentioned_or("+", "93 "), case_insensitive=True)
+client = commands.Bot(command_prefix=commands.when_mentioned_or("+", "93 "), case_insensitive=True, owner_id=353416871350894592)
 
 client.remove_command('help')
 
@@ -30,12 +30,17 @@ for filename in os.listdir('./cogs'):
         client.load_extension(f"cogs.{filename[:-3]}")
 
 
+client.blacklisted_users = []
+
+
 # ---- Events ----
 
 
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="prefix +"))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="prefix <"))
+    data = read_json("blacklisted")
+    client.blacklisted_users = data["blacklistedUsers"]
     print('Logged in as {0} ({0.id})'.format(client.user))
 
 
@@ -59,6 +64,20 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
 
 
+
+# ---- Blacklisted ----
+
+def read_json(filename):
+    with open(f"{filename}.json", "r") as file:
+        data = json.load(file)
+    return data
+
+
+def write_json(data, filename):
+    with open(f"{filename}.json", "w") as file:
+        json.dump(data, file, indent=4)
+
+
 async def get_afk_data():
     with open("afk.json", "r") as f:
         users = json.load(f)
@@ -68,21 +87,69 @@ async def get_afk_data():
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
-        return
 
     users = await get_afk_data()
 
-    if len(message.mentions) > 0:
-        if message.mentions[0].id in users:
-            channel = message.channel
-            await channel.send(f"This user is AFK: {users[message.mentions[0].id]['status']}")
-            
+    userid = str(message.author.id)
+
+    if message.author.id in client.blacklisted_users:
+        return
+
+    if message.author.bot:
+      return
+
+    if userid in users:
+        del users[userid]
+
+        with open("afk.json", "w") as f:
+            json.dump(users, f)
+
+
+        await message.channel.send(f"Welcome back {message.author.display_name}! I removed your AFK status")
+        
+
+    for x in users:
+        if x in message.content.lower():
+            await message.channel.send(f"{message.author.mention} this user has set their status to AFK — {users[x]['status']}")
 
     await client.process_commands(message)
 
 
 # ---- Basic Commands ----
+
+
+@client.command()
+@commands.is_owner()
+async def blacklist(ctx, user: discord.Member):
+    
+    try:
+        if ctx.message.author.id == user.id:
+            await ctx.send(f"You cannot blacklist yourself!")
+
+        client.blacklisted_users.append(user.id)
+        data = read_json("blacklisted")
+        data['blacklistedUsers'].append(user.id)
+        write_json(data, "blacklisted")
+        await ctx.send(f"I added {user} to the global blacklist")
+
+    except:
+        await ctx.send(f"Couldn't blacklist user")
+
+
+@client.command()
+@commands.is_owner()
+async def whitelist(ctx, user: discord.Member):
+    try:
+        if ctx.message.author.id == user.id:
+                await ctx.send(f"You cannot whitelist yourself!")
+
+        client.blacklisted_users.remove(user.id)
+        data = read_json("blacklisted")
+        data['blacklistedUsers'].remove(user.id)
+        write_json(data, "blacklisted")
+        await ctx.send(f"I removed {user} from the global blacklist")
+    except:
+        await ctx.send(f"Couldn't whitelist user")
 
 
 @client.command()
@@ -103,4 +170,4 @@ async def repeat(ctx, *args):
 
 
 
-client.run('')
+client.run('NzcwNzE2MTM4MzQ1NTk0OTEy.X5hnVg.fAbQX9tiEHJKSwX2ymMOP4kBPvo')
