@@ -170,4 +170,4 @@ async def repeat(ctx, *args):
 
 
 
-client.run('NzcwNzE2MTM4MzQ1NTk0OTEy.X5hnVg.fAbQX9tiEHJKSwX2ymMOP4kBPvo')
+client.run('')
