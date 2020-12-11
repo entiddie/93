@@ -6,6 +6,7 @@ Requires
 - Python 3.6
 - Discord.py
 - A lot of Python modules
+- Mongodb for database
 
 **Bot Invite: https://discord.com/oauth2/authorize?client_id=718749763859775559&permissions=8&scope=bot**
 
