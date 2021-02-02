@@ -1,4 +1,7 @@
 # 🌌 93
+
+(Archived. See new repo: https://github.com/AizorStudio/93)
+
 A simple Discord bot with slightly useful commands
 
 Requires
